@@ -1,0 +1,282 @@
+# esphome config file with all features
+substitutions:
+  devicename: az32f05
+  friendly_name: f05
+  ledpin: GPIO26  # 02
+
+esphome:
+  name: $devicename
+  friendly_name: $friendly_name
+  comment: 192.168.1.139, 144LEDs, 5V, 1m, 43W, IP67, Balkon
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "cZAPYGFOcbuKJR303sQ3FDHdTnz+ejoJNjeGNebneEk="
+
+ota:
+  password: "4380be3d619a9ae9f3d296971686395b"
+
+# Example configuration entry with additional service , ping port
+mdns:
+  disabled: false #default
+
+wifi:
+  ssid: 6wlan # !secret wifi_ssid
+  password: !secret wifi_password
+#  power_save_mode: none
+#  reboot_timeout: 0s
+#  domain: ".local"
+#  output_power: 20dB
+#  fast_connect: true
+
+#  manual_ip:
+#    static_ip: 192.168.1.169
+#    gateway: 192.168.1.1
+#    subnet: 255.255.255.0 # subnet2 test 255.255.0.0
+#    dns1: 192.168.1.1
+#    dns2: 8.8.8.8
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Az32f05 Fallback Hotspot"
+    password: "Lltl5z4NSIz5"
+
+captive_portal:
+
+web_server:
+  port: 80
+  version: 2
+  local: true
+  auth:
+    username: f05
+    password: control
+
+light:
+  - platform: fastled_clockless
+    chipset: WS2812B   #WS2812B
+    pin: $ledpin  # GPIO26   256 120
+    num_leds: 144
+    # color_correct: [30%, 30%, 30%]
+    rgb_order: GRB
+    name: "FastLED NEOPIXEL Light"
+    id: my_light
+    default_transition_length: 1s
+    #AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    #restore_mode: ALWAYS_ON # ALWAYS_OFF
+    restore_mode: ALWAYS_OFF
+    effects:
+      - random:
+      - random:
+          name: Random Effect With Custom Values
+          transition_length: 2s
+          update_interval: 3s
+      - strobe:
+      - strobe:
+          name: Strobe Effect With Custom Values
+          colors:
+            - state: true
+              brightness: 100%
+              red: 100%
+              green: 00%
+              blue: 0%
+              duration: 500ms
+            - state: false
+              duration: 250ms
+            - state: true
+              brightness: 100%
+              red: 0%
+              green: 100%
+              blue: 0%
+              duration: 500ms
+      - flicker:
+      - flicker:
+          name: Flicker Effect With Custom Values1
+          alpha: 95%
+          intensity: 1.5%
+      - addressable_flicker:
+      - addressable_flicker:
+          name: Flicker Effect With Custom Values2
+          update_interval: 16ms
+          intensity: 5%
+      - addressable_rainbow:
+      - addressable_rainbow:
+          name: Rainbow Effect Full
+          speed: 10
+          width: 8
+
+      - addressable_rainbow:
+          name: Rainbow Effect Half
+          speed: 5
+          width: 4
+      - addressable_color_wipe:
+      - addressable_color_wipe:
+          name: Color Wipe Effect With Custom Values
+          colors:
+            - red: 100%
+              green: 100%
+              blue: 100%
+              num_leds: 1
+            - red: 0%
+              green: 0%
+              blue: 0%
+              num_leds: 1
+          add_led_interval: 100ms
+          reverse: false
+      - addressable_scan:
+      - addressable_scan:
+          name: Scan Effect With Custom Values
+          move_interval: 100ms
+          scan_width: 1
+      - addressable_twinkle:
+      - addressable_twinkle:
+          name: Twinkle Effect With Custom Values
+          twinkle_probability: 5%
+          progress_interval: 4ms
+      - addressable_fireworks:
+      - addressable_fireworks:
+          name: Fireworks Effect With Custom Values
+          update_interval: 32ms
+          spark_probability: 10%
+          use_random_color: false
+          fade_out_rate: 120
+
+      - automation:
+          name: Custom Automation Effect
+          sequence:
+          - light.addressable_set:
+              id: my_light
+              red: 100%
+              green: 100%
+              blue: 100%
+          - delay: 1000ms
+          - light.addressable_set:
+              id: my_light
+              range_from: 0
+              range_to: 144
+              red: 100%
+              green: 0%
+              blue: 0%
+
+# Set Up Key Ports For Communication
+#i2c:
+ #  - id: bus_a
+ #    sda: GPIO21
+ #    scl: GPIO22
+ #    scan: true
+     #frequency: 400kHz
+#   - id: bus_b
+#     sda: GPIO16
+#     scl: GPIO17
+#     scan: true
+     #frequency: 10kHz
+
+#####################################################################################
+# Numbers For Configuration
+number:
+
+  - platform: template
+    name: BME280 Humidity Offset
+    id: bme280_humidity_offset
+    restore_value: true
+    initial_value: +0.1
+    min_value: -70.0
+    max_value: 70.0
+    entity_category: "CONFIG"
+    unit_of_measurement: "%"
+    optimistic: true
+    update_interval: never
+    step: 0.1
+    mode: box
+
+  - platform: template
+    name: BME280 Temperature Offset
+    id: bme280_temperature_offset
+    restore_value: true
+    initial_value: -0.1
+    min_value: -70.0
+    max_value: 70.0
+    entity_category: "CONFIG"
+    unit_of_measurement: "°C"
+    optimistic: true
+    update_interval: never
+    step: 0.1
+    mode: box
+
+#####################################################################################
+sensor:
+#  - platform: internal_temperature
+#    name: "d04 ESP Temperature"
+#    id: sys_esp_temperature
+
+  - platform: wifi_signal # Reports the WiFi signal strength/RSSI in dB
+    name: "${friendly_name} WiFi Signal"
+    id: wifi_signal_db
+    update_interval: 4s     #60s 120s
+    filters:
+      - sliding_window_moving_average:
+          window_size: 15
+          send_every: 15
+          send_first_at: 1
+    entity_category: "diagnostic"
+  - platform: copy # Reports the WiFi signal strength in %
+    source_id: wifi_signal_db
+    name: "${friendly_name} WiFi Signal Percent"
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: "%"  #Signal %
+    entity_category: "diagnostic"
+
+  - platform: uptime
+    name: "${friendly_name} Uptime Sensor" 
+    id: uptimesensor
+
+#####################################################################################
+# Text Sensor definition
+# WIFI Info Bereich
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "${friendly_name} IP Address"
+    ssid:
+      name: "${friendly_name} Connected SSID"
+    bssid:
+      name: "${friendly_name} Connected BSSID"
+    mac_address:
+      name: "${friendly_name} Mac Wifi Address"
+
+#####################################################################################
+switch:
+  - platform: restart
+    name: "${friendly_name} Restart"
+    id: d07_restart  
+
+  - platform: gpio
+    pin: GPIO27
+    id: pin27
+    name: "${friendly_name} 27Relais1"
+
+  - platform: gpio
+    pin: GPIO19
+    id: pin19
+    name: "${friendly_name} 19Relais2"
+
+  - platform: gpio
+    pin: GPIO18
+    id: pin18
+    name: "${friendly_name} 18Relais3"
+
+  - platform: gpio
+    pin: GPIO4
+    id: pin4
+    name: "${friendly_name} 04Relais4"

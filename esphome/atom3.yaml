@@ -1,0 +1,33 @@
+substitutions:
+  device_name: m5stack-atom3echo
+  devicename: m5stack-atom3echo
+  friendly_name: atom3echo
+packages:
+  m5stack.atom-echo-voice-assistant: github://esphome/firmware/voice-assistant/m5stack-atom-echo.yaml@main
+esphome:
+  name: $devicename
+  friendly_name: $friendly_name
+  comment: 192.168.1.119, atom3echo, Voice Jarvis Echo
+  #name: ${name}
+  name_add_mac_suffix: false
+  #friendly_name: atom3echo
+  #comment: M5Echo Hey,Jarvis
+
+web_server:
+  port: 80
+  version: 2
+  local: true
+  auth:
+    username: atom3
+    password: control
+## Device-specific 
+
+api:
+  encryption:
+    key: A+5Bc5Je9gdx5sgloAt+Wt2FckEfp4FPxvQqWwM6MMk=
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+

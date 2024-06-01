@@ -1,0 +1,242 @@
+# esphome config file with all features
+substitutions:
+  devicename: az32d08
+  friendly_name: d08
+  #adc0pin: GPIO32  # 02
+  board: esp32dev  # d1_mini
+  loglevel: DEBUG
+
+esphome:
+  name: $devicename 
+  friendly_name: $friendly_name
+  comment: 192.168.1.134, MPU6050 Accelxyz + wifi dBm names
+
+esp32:
+  board: $board
+  framework:
+    type: arduino
+
+logger:
+ level: $loglevel
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "CUuhpB5JCmuhRdVGfALGXpM5KF4dFJtpTiQU6tfVfbE="
+
+ota:
+  password: "2d7c8f3c0cd37794d139067c0222208c"
+
+wifi:
+  ssid: 6wlan # !secret wifi_ssid
+  password: !secret wifi_password
+#  power_save_mode: none
+#  reboot_timeout: 0s
+#  domain: ".local"       #  domain  .fritz.box 
+#  output_power: 20dB
+#  fast_connect: true
+
+#  manual_ip:
+#    static_ip: 192.168.1.173 # 3EG5-Garten (A) = Bereich ,  d8
+#    gateway: 192.168.1.1
+#    subnet: 255.255.255.0 # subnet2 test 255.255.0.0
+#    dns1: 192.168.1.1
+#    dns2: 8.8.8.8
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Az32D08 Fallback Hotspot"
+    password: "GktKX9GylPr8"
+
+captive_portal:
+web_server:
+  port: 80
+  version: 2
+  local: true
+  auth:
+    username: d08
+    password: control
+#####################################################################################
+# globals definition
+globals:
+  - id: adc0_offset100
+    type: float
+    restore_value: no
+    initial_value: '100'
+
+  - id: adc0_offset0
+    type: float
+    restore_value: no
+    initial_value: '0'
+#####################################################################################
+# Numbers For Configuration
+number:
+
+  - platform: template
+    name: ADC0 Offset0now
+    id: adc0_offset0now
+    restore_value: true
+    initial_value: -10.7
+    min_value: 0.0
+    max_value: 100.0
+    entity_category: "CONFIG"
+    unit_of_measurement: "%"
+    optimistic: true
+    update_interval: never
+    step: 0.1
+    mode: box
+
+  - platform: template
+    name: ADC0 Offset100now
+    id: adc0_offset100now
+    restore_value: true
+    initial_value: 96.7
+    min_value: 0.0
+    max_value: 100.0
+    entity_category: "CONFIG"
+    unit_of_measurement: "%"
+    optimistic: true
+    update_interval: never
+    step: 0.1
+    mode: box
+#####################################################################################
+# binär Sensor definition
+binary_sensor:
+  - platform: status
+    name: "D08 Status"
+
+  - platform: template
+    name: "wifi_signal_dbRSSI-30"  # voll blau - ueber > -30dBm Amazing
+    lambda: |-
+          if (id(wifi_signal_db).state > -30) {
+            return true;
+          } else {
+            return false;
+          }
+
+  - platform: template
+    name: "wifi_signal_dbRSSI-55"     # lila/violet - unter < -55dBm Very good signal +++
+    lambda: |-
+          if (id(wifi_signal_db).state > -55) {
+            return true;
+          } else {
+            return false;
+          }
+    
+  - platform: template
+    name: "wifi_signal_dbRSSI-67"   # hell grün - unter < -67dBm Fairly Good ++
+    lambda: |-
+          if (id(wifi_signal_db).state > -67) {
+            return true;
+          } else {
+            return false;
+          } 
+
+  - platform: template
+    name: "wifi_signal_dbRSSI-70"     # grün - unter < -70dBm Okay +
+    lambda: |-
+          if (id(wifi_signal_db).state > -70) {
+            return true;
+          } else {
+            return false;
+          }
+
+  - platform: template
+    name: "wifi_signal_dbRSSI-80"     # gelb - unter 20% < -80dBm Not good -
+    lambda: |-
+          if (id(wifi_signal_db).state > -80) {
+            return true;
+          } else {
+            return false;
+          } 
+    
+  - platform: template
+    name: "wifi_signal_dbRSSI-90"   # rot - leer 10% < -90dBm Extremely weak signal (unusable) --
+    lambda: |-
+          if (id(wifi_signal_db).state > -90) {
+            return true;
+          } else {
+            return false;
+          } 
+#####################################################################################
+# Sensor definition
+i2c:
+  sda: 21
+  scl: 22
+  scan: true
+  id: bus_a
+
+# MPU6050 Sensor
+sensor:
+  - platform: mpu6050
+    address: 0x68
+    i2c_id: bus_a
+    accel_x:
+      name: "MPU6050 Accel X"
+    accel_y:
+      name: "MPU6050 Accel Y"
+    accel_z:
+      name: "MPU6050 Accel z"
+    gyro_x:
+      name: "MPU6050 Gyro X"
+    gyro_y:
+      name: "MPU6050 Gyro Y"
+    gyro_z:
+      name: "MPU6050 Gyro z"
+    temperature:
+      name: "MPU6050 Temperature"
+    update_interval: 60s #  from 1s  real time car  to  ... 10s 60s def
+    id: d08_mpu6050
+
+  - platform: internal_temperature
+    name: "${friendly_name} Temperature"
+    id: sys_esp_temperature
+
+  - platform: wifi_signal # Reports the WiFi signal strength/RSSI in dB
+    name: "${friendly_name} WiFi Signal"
+    id: wifi_signal_db
+    update_interval: 4s     #60s 120s
+    filters:
+      - sliding_window_moving_average:
+          window_size: 15
+          send_every: 15
+          send_first_at: 1
+    entity_category: "diagnostic"
+  - platform: copy # Reports the WiFi signal strength in %
+    source_id: wifi_signal_db
+    name: "${friendly_name} WiFi Signal Percent"
+    filters:
+      - lambda: return min(max(2 * (x + 100.0), 0.0), 100.0);
+    unit_of_measurement: "%"  #Signal %
+    entity_category: "diagnostic"
+
+  - platform: uptime
+    name: "${friendly_name} Uptime Sensor" 
+    id: uptimesensor
+
+#####################################################################################
+# WIFI Info Bereich
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "${friendly_name} IP Address"
+    ssid:
+      name: "${friendly_name} Connected SSID"
+    bssid:
+      name: "${friendly_name} Connected BSSID"
+    mac_address:
+      name: "${friendly_name} Mac Wifi Address"
+#####################################################################################
+switch:
+  - platform: restart
+    name: "D08 Restart"
+
+  - platform: shutdown
+    name: "D08 Shutdown"
+#####################################################################################
+time:
+  - platform: sntp
+    id: esphome_time
+    servers:
+      - 0.pool.ntp.org
+    
