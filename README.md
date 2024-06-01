@@ -8,6 +8,6 @@ Video:
 
 https://www.youtube.com/watch?v=jPW5DhYZHiI
 
-<a href="https://www.youtube.com/watch?v=jPW5DhYZHiI"><img src='git-pics/pcb-srv7wlan7haos_main.png' width='50%'/></a>
+<a href="https://www.youtube.com/watch?v=jPW5DhYZHiI"><img src='00_overview_haos.png' width='50%'/></a>
 
 
