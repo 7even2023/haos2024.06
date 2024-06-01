@@ -1,0 +1,19 @@
+### sensor.yaml
+#configuration.yaml
+#vscode-remote://192.168.1.77:8123/config/configuration.yaml
+#https://www.sonoya.com/anleitung-sensor-ueberwachung-in-home-assistant-mit-virtuellen-sensoren.html
+# 5min = 300 , 24h = 86400
+
+#sensor: !include sensor.yaml
+
+# Adds local host sensor information
+# Die System Monitor YAML-Konfiguration wird entfernt Version 2024.7.0.
+#sensor:
+#  - platform: systemmonitor
+#    resources:
+#      - type: disk_use_percent
+#        arg: /config
+
+
+
+# nicht unterstützt seit 09020224      - 'beat'
